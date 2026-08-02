@@ -5,17 +5,15 @@
 [build.environment]
   NODE_VERSION = "22"
 
-[functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
-
 # Le relais OpenRouter. La clé API vit uniquement dans l'environnement Netlify ;
 # elle n'est jamais servie au navigateur.
-[[redirects]]
-  from = "/api/dialogue"
-  to = "/.netlify/functions/dialogue"
-  status = 200
-  force = true
+#
+# La fonction déclare elle-même sa route (`export const config = { path: … }`,
+# API v2) : il ne faut surtout PAS ajouter de redirection vers
+# /.netlify/functions/dialogue, qui n'existe pas pour une fonction à route
+# déclarée — la redirection masquerait la vraie route et renverrait un 404.
+[functions]
+  directory = "netlify/functions"
 
 # Le site utilise un routeur à # : une seule page réelle suffit.
 # Cette règle couvre néanmoins les accès directs à un chemin.
