@@ -1,8 +1,9 @@
 import type { SacredText } from '../types';
 import { textesAbrahamiques } from './abrahamiques';
 import { textesOrientaux } from './orientaux';
+import { textesComplements } from './complements';
 
-export const texts: SacredText[] = [...textesAbrahamiques, ...textesOrientaux].sort(
+export const texts: SacredText[] = [...textesAbrahamiques, ...textesOrientaux, ...textesComplements].sort(
   (a, b) => a.sortYear - b.sortYear,
 );
 

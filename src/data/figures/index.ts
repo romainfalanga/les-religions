@@ -6,6 +6,7 @@ import { figuresJudaisme } from './judaisme';
 import { figuresIslam } from './islam';
 import { figuresOrient } from './orient';
 import { figuresAutres } from './autres';
+import { figuresComplements } from './complements';
 
 export const figures: Figure[] = [
   ...figuresFondateurs,
@@ -15,6 +16,7 @@ export const figures: Figure[] = [
   ...figuresIslam,
   ...figuresOrient,
   ...figuresAutres,
+  ...figuresComplements,
 ].sort((a, b) => a.sortYear - b.sortYear);
 
 export const figuresById = new Map(figures.map((f) => [f.id, f]));
