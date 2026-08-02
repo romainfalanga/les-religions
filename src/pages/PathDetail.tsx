@@ -106,7 +106,7 @@ export default function PathDetail() {
 
         <div className="mt-12 border-t border-ink-200 pt-8">
           <h2 className="section-title mb-4">Poursuivre</h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {learningPaths
               .filter((x) => x.id !== p.id)
               .slice(0, 3)

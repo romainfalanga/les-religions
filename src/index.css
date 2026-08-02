@@ -72,3 +72,59 @@
 .timeline-rail {
   background: linear-gradient(to bottom, transparent, #c2baa8 6%, #c2baa8 94%, transparent);
 }
+
+/* --- Écritures originales de l'atelier de traduction ---------------------- */
+/* Aucune police n'est téléchargée : on s'appuie sur les polices système,
+   listées par plateforme, avec repli sur la pile serif générique. */
+
+.script-hebrew {
+  font-family: 'SBL Hebrew', 'Ezra SIL', 'Taamey Frank CLM', 'David CLM', 'Frank Ruehl CLM',
+    'Times New Roman', 'Noto Sans Hebrew', 'Noto Serif Hebrew', 'Arial Hebrew', serif;
+  line-height: 2.1;
+}
+
+.script-arabic {
+  font-family: 'Amiri', 'Scheherazade New', 'KFGQPC Uthman Taha Naskh', 'Traditional Arabic',
+    'Geeza Pro', 'Noto Naskh Arabic', 'Noto Sans Arabic', serif;
+  line-height: 2.3;
+}
+
+.script-devanagari {
+  font-family: 'Sanskrit 2003', 'Siddhanta', 'Adobe Devanagari', 'Noto Serif Devanagari',
+    'Noto Sans Devanagari', 'Kohinoor Devanagari', 'Devanagari MT', serif;
+  line-height: 2;
+}
+
+.script-han {
+  font-family: 'Source Han Serif SC', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun',
+    'Microsoft YaHei', 'PingFang SC', serif;
+  line-height: 1.95;
+  letter-spacing: 0.04em;
+}
+
+.script-gurmukhi {
+  font-family: 'Noto Serif Gurmukhi', 'Noto Sans Gurmukhi', 'Gurmukhi MN', 'Gurmukhi Sangam MN',
+    'Raavi', serif;
+  line-height: 2.1;
+}
+
+.script-greek {
+  font-family: 'SBL Greek', 'GFS Didot', 'New Athena Unicode', 'Gentium Plus', 'Palatino Linotype',
+    'Times New Roman', serif;
+  line-height: 1.85;
+}
+
+.script-latin {
+  font-family: 'Gentium Plus', 'Charis SIL', Georgia, 'Times New Roman', serif;
+  line-height: 1.8;
+}
+
+/* Le texte original est présenté grand : c'est l'objet, pas un ornement. */
+.original-block {
+  font-size: 1.5rem;
+}
+@media (min-width: 640px) {
+  .original-block {
+    font-size: 1.75rem;
+  }
+}

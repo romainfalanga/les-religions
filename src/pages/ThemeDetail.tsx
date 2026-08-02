@@ -60,7 +60,7 @@ export default function ThemeDetail() {
         </Section>
 
         <Section id="lecture">
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div className="rounded-lg border border-emerald-300/50 bg-emerald-50/50 p-5">
               <h2 className="eyebrow mb-3 text-emerald-800">Ce qui converge</h2>
               <ul className="space-y-2.5">

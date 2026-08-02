@@ -66,7 +66,7 @@ export default function Texts() {
       </PageHeader>
 
       <div className="container-page py-10">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {list.map((t) => {
             const color = t.traditions[0] ? traditionColor(t.traditions[0]) : '#8d7f68';
             return (

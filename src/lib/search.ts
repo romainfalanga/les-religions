@@ -5,9 +5,22 @@ import { themes } from '../data/themes';
 import { concepts } from '../data/concepts';
 import { timeline } from '../data/timeline';
 import { learningPaths } from '../data/influences';
+import { places } from '../data/geo';
+import { corpusBooks } from '../data/corpus';
+import { mechanisms } from '../data/emergence';
 import { normalize } from './utils';
 
-export type SearchKind = 'tradition' | 'figure' | 'text' | 'theme' | 'concept' | 'event' | 'path';
+export type SearchKind =
+  | 'tradition'
+  | 'figure'
+  | 'text'
+  | 'theme'
+  | 'concept'
+  | 'event'
+  | 'path'
+  | 'place'
+  | 'passage'
+  | 'mechanism';
 
 export interface SearchItem {
   kind: SearchKind;
@@ -26,7 +39,22 @@ export const kindLabels: Record<SearchKind, string> = {
   concept: 'Notion',
   event: 'Événement',
   path: 'Parcours',
+  place: 'Lieu',
+  passage: 'Passage original',
+  mechanism: 'Mécanisme',
 };
+
+const placeKindLabels: Record<string, string> = {
+  berceau: 'Berceau',
+  sanctuaire: 'Sanctuaire',
+  texte: 'Lieu de texte',
+  concile: 'Concile',
+  savoir: 'Centre de savoir',
+  conflit: 'Conflit',
+  archeologie: 'Site archéologique',
+  diaspora: 'Diaspora',
+};
+const placeLabel = (k: string) => placeKindLabels[k] ?? k;
 
 let cache: SearchItem[] | null = null;
 
@@ -113,6 +141,55 @@ export function searchIndex(): SearchItem[] {
     });
   }
 
+  for (const p of places) {
+    items.push({
+      kind: 'place',
+      id: p.id,
+      title: p.name,
+      subtitle: p.modern ? `${placeLabel(p.kind)} · ${p.modern}` : placeLabel(p.kind),
+      href: `/carte?lieu=${p.id}`,
+      haystack: normalize([p.name, p.modern ?? '', p.summary, placeLabel(p.kind)].join(' ')),
+    });
+  }
+
+  for (const b of corpusBooks) {
+    for (const u of b.units) {
+      items.push({
+        kind: 'passage',
+        id: `${b.id}/${u.id}`,
+        title: u.ref,
+        subtitle: u.label ? `${b.title} — ${u.label}` : b.title,
+        href: `/atelier?livre=${b.id}&page=${Math.floor(b.units.indexOf(u) / 2) + 1}`,
+        haystack: normalize(
+          [
+            u.ref,
+            u.label ?? '',
+            b.title,
+            u.translit,
+            u.literal,
+            u.issue?.title ?? '',
+            u.issue?.text ?? '',
+            ...u.translations.map((t) => `${t.source} ${t.text}`),
+            ...(u.gloss ?? []).map((g) => `${g.translit} ${g.sense}`),
+          ].join(' '),
+        ),
+      });
+    }
+  }
+
+  for (const m of mechanisms) {
+    items.push({
+      kind: 'mechanism',
+      id: m.id,
+      title: m.title,
+      subtitle: m.claim,
+      href: `/emergence#${m.id}`,
+      haystack: normalize(
+        [m.title, m.claim, m.description, ...m.cases.map((c) => `${c.title} ${c.text}`)].join(' '),
+      ),
+    });
+  }
+
   cache = items;
   return items;
 }
@@ -124,7 +201,10 @@ const kindPriority: Record<SearchKind, number> = {
   theme: 3,
   concept: 4,
   path: 5,
-  event: 6,
+  mechanism: 6,
+  event: 7,
+  place: 8,
+  passage: 9,
 };
 
 export function search(query: string, limit = 30): SearchItem[] {

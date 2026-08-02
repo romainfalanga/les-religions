@@ -71,6 +71,13 @@ const aliases: Record<string, string> = {
   'sramana-jain': 'Shramanisme jaïn',
 };
 
+/** Identifiants tolérés sans fiche propre : courants, milieux, mouvances. */
+export const traditionAliases = aliases;
+
+export function isKnownTradition(id: string): boolean {
+  return traditionsById.has(id) || id in aliases;
+}
+
 export function traditionName(id: string): string {
   return traditionsById.get(id)?.name ?? aliases[id] ?? id;
 }

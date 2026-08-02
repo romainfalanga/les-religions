@@ -1,30 +1,46 @@
-import { useEffect, useState } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { SearchDialog } from './components/SearchDialog';
 import { cx } from './lib/utils';
 
 import Home from './pages/Home';
-import Traditions from './pages/Traditions';
-import TraditionDetail from './pages/TraditionDetail';
-import Figures from './pages/Figures';
-import FigureDetail from './pages/FigureDetail';
-import Texts from './pages/Texts';
-import TextDetail from './pages/TextDetail';
-import Timeline from './pages/Timeline';
-import Themes from './pages/Themes';
-import ThemeDetail from './pages/ThemeDetail';
-import Concepts from './pages/Concepts';
-import Influences from './pages/Influences';
-import Paths from './pages/Paths';
-import PathDetail from './pages/PathDetail';
-import Method from './pages/Method';
-import NotFound from './pages/NotFound';
+
+// Toutes les autres pages sont chargées à la demande : les données de l'atlas
+// pèsent plus d'un mégaoctet, et personne n'a besoin des 227 fiches de
+// personnages pour lire la page d'accueil.
+const Traditions = lazy(() => import('./pages/Traditions'));
+const TraditionDetail = lazy(() => import('./pages/TraditionDetail'));
+const Figures = lazy(() => import('./pages/Figures'));
+const FigureDetail = lazy(() => import('./pages/FigureDetail'));
+const Texts = lazy(() => import('./pages/Texts'));
+const TextDetail = lazy(() => import('./pages/TextDetail'));
+const Timeline = lazy(() => import('./pages/Timeline'));
+const MapPage = lazy(() => import('./pages/MapPage'));
+const Atelier = lazy(() => import('./pages/Atelier'));
+const Emergence = lazy(() => import('./pages/Emergence'));
+const Themes = lazy(() => import('./pages/Themes'));
+const ThemeDetail = lazy(() => import('./pages/ThemeDetail'));
+const Concepts = lazy(() => import('./pages/Concepts'));
+const Influences = lazy(() => import('./pages/Influences'));
+const Paths = lazy(() => import('./pages/Paths'));
+const PathDetail = lazy(() => import('./pages/PathDetail'));
+const Method = lazy(() => import('./pages/Method'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+
+function PageFallback() {
+  return (
+    <div className="container-page py-24 text-center text-sm text-ink-500">Chargement…</div>
+  );
+}
 
 const nav = [
   { to: '/traditions', label: 'Traditions' },
   { to: '/personnages', label: 'Personnages' },
   { to: '/textes', label: 'Textes' },
   { to: '/chronologie', label: 'Chronologie' },
+  { to: '/carte', label: 'Carte' },
+  { to: '/atelier', label: 'Atelier' },
+  { to: '/emergence', label: 'Émergence' },
   { to: '/comparaisons', label: 'Comparaisons' },
   { to: '/influences', label: 'Influences' },
   { to: '/notions', label: 'Notions' },
@@ -84,14 +100,14 @@ export default function App() {
             </span>
           </Link>
 
-          <nav className="ml-auto hidden items-center gap-0.5 lg:flex">
+          <nav className="ml-auto hidden items-center gap-0 xl:flex">
             {nav.map((n) => (
               <NavLink
                 key={n.to}
                 to={n.to}
                 className={({ isActive }) =>
                   cx(
-                    'rounded-md px-2.5 py-1.5 text-[0.83rem] transition',
+                    'whitespace-nowrap rounded-md px-2 py-1.5 text-[0.8rem] transition',
                     isActive ? 'bg-ink-900 text-parchment' : 'text-ink-600 hover:bg-ink-100 hover:text-ink-900',
                   )
                 }
@@ -103,17 +119,16 @@ export default function App() {
 
           <button
             onClick={() => setSearchOpen(true)}
-            className="ml-auto flex items-center gap-2 rounded-md border border-ink-200 bg-white/60 px-3 py-1.5 text-sm text-ink-500 transition hover:border-ink-300 lg:ml-2"
+            className="ml-auto flex shrink-0 items-center gap-2 rounded-md border border-ink-200 bg-white/60 px-3 py-1.5 text-sm text-ink-500 transition hover:border-ink-300 xl:ml-2"
             aria-label="Rechercher"
           >
             <span>⌕</span>
             <span className="hidden sm:inline">Rechercher</span>
-            <kbd className="hidden rounded border border-ink-200 px-1 text-[0.65rem] md:inline">⌘K</kbd>
           </button>
 
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="rounded-md border border-ink-200 px-2.5 py-1.5 text-sm lg:hidden"
+            className="shrink-0 rounded-md border border-ink-200 px-2.5 py-1.5 text-sm xl:hidden"
             aria-label="Menu"
           >
             ☰
@@ -121,8 +136,8 @@ export default function App() {
         </div>
 
         {menuOpen && (
-          <nav className="border-t border-ink-200 bg-parchment lg:hidden">
-            <div className="container-page grid grid-cols-2 gap-1 py-3">
+          <nav className="border-t border-ink-200 bg-parchment xl:hidden">
+            <div className="container-page grid grid-cols-2 gap-1 py-3 sm:grid-cols-3">
               {nav.map((n) => (
                 <NavLink
                   key={n.to}
@@ -146,6 +161,7 @@ export default function App() {
       </header>
 
       <main className="flex-1">
+        <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/traditions" element={<Traditions />} />
@@ -155,6 +171,9 @@ export default function App() {
           <Route path="/textes" element={<Texts />} />
           <Route path="/textes/:id" element={<TextDetail />} />
           <Route path="/chronologie" element={<Timeline />} />
+          <Route path="/carte" element={<MapPage />} />
+          <Route path="/atelier" element={<Atelier />} />
+          <Route path="/emergence" element={<Emergence />} />
           <Route path="/comparaisons" element={<Themes />} />
           <Route path="/comparaisons/:id" element={<ThemeDetail />} />
           <Route path="/notions" element={<Concepts />} />
@@ -164,6 +183,7 @@ export default function App() {
           <Route path="/methode" element={<Method />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </main>
 
       <footer className="mt-12 border-t border-ink-200 bg-white/40">
@@ -185,6 +205,9 @@ export default function App() {
             </Link>
             <Link to="/notions" className="link-underline text-ink-700">
               Glossaire
+            </Link>
+            <Link to="/atelier" className="link-underline text-ink-700">
+              Textes en langue originale
             </Link>
           </div>
         </div>

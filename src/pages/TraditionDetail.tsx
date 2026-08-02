@@ -63,7 +63,7 @@ export default function TraditionDetail() {
 
       <div className="container-page">
         <Section>
-          <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.6fr_1fr]">
             <div>
               <h2 className="section-title">En bref</h2>
               <Prose>
@@ -91,7 +91,7 @@ export default function TraditionDetail() {
         </Section>
 
         <Section title="Pratiques" id="pratiques">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {t.practices.map((p) => (
               <div key={p.title} className="card p-5">
                 <h3 className="font-serif text-lg font-semibold text-ink-950">{p.title}</h3>
@@ -158,7 +158,7 @@ export default function TraditionDetail() {
         </Section>
 
         <Section title="Débats vivants" id="debats" subtitle="Ce qui se discute aujourd’hui à l’intérieur de la tradition.">
-          <ul className="grid gap-2 sm:grid-cols-2">
+          <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {t.livingDebates.map((d) => (
               <li key={d} className="flex gap-3 rounded-md border border-ink-200 bg-white/50 px-4 py-3 text-sm text-ink-700">
                 <span className="text-ink-400">·</span>
@@ -170,7 +170,7 @@ export default function TraditionDetail() {
 
         {(t.keyFigures.length > 0 || t.keyTexts.length > 0) && (
           <Section title="Figures et textes" id="figures-textes">
-            <div className="grid gap-8 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
               <div>
                 <h3 className="eyebrow mb-3">Personnages majeurs</h3>
                 <div className="flex flex-wrap gap-2">

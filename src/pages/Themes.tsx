@@ -12,7 +12,7 @@ export default function Themes() {
       />
 
       <div className="container-page py-10">
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {themes.map((t) => (
             <Link key={t.id} to={`/comparaisons/${t.id}`} className="card card-hover flex flex-col p-6">
               <span className="text-2xl text-ink-400">{t.icon}</span>

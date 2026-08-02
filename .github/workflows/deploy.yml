@@ -1,0 +1,54 @@
+name: Déploiement Netlify
+
+# Déploiement continu depuis GitHub.
+#
+# Deux façons de relier ce dépôt à Netlify — une seule suffit :
+#
+#  A. Via l'interface Netlify (recommandé, aucun secret à créer)
+#     app.netlify.com → projet « atlas-des-religions » → Project configuration
+#     → Build & deploy → Link repository → GitHub → romainfalanga/les-religions.
+#     Netlify lit alors netlify.toml et déploie à chaque push. Ce workflow
+#     devient inutile et peut être supprimé.
+#
+#  B. Via ce workflow (si vous préférez que GitHub pilote le déploiement)
+#     Ajoutez dans Settings → Secrets and variables → Actions :
+#       NETLIFY_AUTH_TOKEN  — jeton personnel créé sur app.netlify.com/user/applications
+#       NETLIFY_SITE_ID     — 89063886-ca69-4812-8921-49caee3ea595
+#     Le workflow s'exécute alors à chaque push et publie en production.
+
+on:
+  push:
+    branches:
+      - main
+      - claude/religion-history-platform-y6ry2j
+  workflow_dispatch:
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Vérifier les types
+        run: npx tsc -b
+
+      - name: Construire
+        run: npm run build
+
+      - name: Vérifier l'intégrité des données
+        run: npm run check:data
+
+      - name: Publier sur Netlify
+        if: ${{ env.NETLIFY_AUTH_TOKEN != '' }}
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: npx netlify-cli@latest deploy --dir=dist --prod --message "${{ github.event.head_commit.message }}"

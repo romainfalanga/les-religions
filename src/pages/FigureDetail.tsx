@@ -58,7 +58,7 @@ export default function FigureDetail() {
 
       <div className="container-page">
         <Section>
-          <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.6fr_1fr]">
             <div>
               <Prose>
                 <p className="text-[1.08rem]">{f.summary}</p>
@@ -118,7 +118,7 @@ export default function FigureDetail() {
 
         {f.quotes.length > 0 && (
           <Section title="Paroles" id="paroles">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {f.quotes.map((q) => (
                 <QuoteBlock key={q.text} {...q} />
               ))}
@@ -159,7 +159,7 @@ export default function FigureDetail() {
 
         {(f.relations.length > 0 || inbound.length > 0) && (
           <Section title="Relations" id="relations">
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               {f.relations.filter((r) => figuresById.has(r.figureId)).length > 0 && (
                 <div>
                   <h3 className="eyebrow mb-3">Liens déclarés</h3>

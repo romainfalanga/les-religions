@@ -18,7 +18,7 @@ export default function Paths() {
       />
 
       <div className="container-page py-10">
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {learningPaths.map((p) => (
             <Link key={p.id} to={`/parcours/${p.id}`} className="card card-hover flex flex-col p-6">
               <div className="flex flex-wrap items-center gap-2">

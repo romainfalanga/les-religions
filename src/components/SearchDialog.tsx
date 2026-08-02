@@ -1,20 +1,28 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { kindLabels, search, type SearchItem } from '../lib/search';
+import type { SearchItem, SearchKind } from '../lib/search';
 import { cx } from '../lib/utils';
+
+/** L'index embarque toutes les données : on ne le charge qu'à la première ouverture. */
+type SearchModule = typeof import('../lib/search');
+let modulePromise: Promise<SearchModule> | null = null;
+const loadSearch = () => (modulePromise ??= import('../lib/search'));
 
 export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
+  const [mod, setMod] = useState<SearchModule | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  const results = useMemo(() => search(query, 24), [query]);
+  const results = mod ? mod.search(query, 24) : [];
+  const kindLabels: Record<SearchKind, string> | null = mod?.kindLabels ?? null;
 
   useEffect(() => {
     if (open) {
       setQuery('');
       setActive(0);
+      void loadSearch().then(setMod);
       setTimeout(() => inputRef.current?.focus(), 30);
     }
   }, [open]);
@@ -64,7 +72,9 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
         </div>
 
         <div className="max-h-[55vh] overflow-y-auto">
-          {query.trim().length < 2 ? (
+          {!mod ? (
+            <p className="px-5 py-8 text-center text-sm text-ink-400">Indexation…</p>
+          ) : query.trim().length < 2 ? (
             <p className="px-5 py-8 text-center text-sm text-ink-400">
               Tapez au moins deux caractères. Plus de 500 entrées sont indexées.
             </p>
@@ -83,7 +93,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
                     )}
                   >
                     <span className="mt-0.5 w-[5.5rem] shrink-0 text-[0.65rem] uppercase tracking-wide text-ink-400">
-                      {kindLabels[r.kind]}
+                      {kindLabels?.[r.kind]}
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate font-medium text-ink-900">{r.title}</span>

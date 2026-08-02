@@ -36,7 +36,7 @@ export default function Method() {
             personnage mythique peut structurer une civilisation entière, et un personnage attesté peut n’avoir
             eu aucun effet.
           </p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Object.entries(historicityLabels).map(([key, v]) => (
               <div
                 key={key}
@@ -84,6 +84,42 @@ export default function Method() {
           </div>
         </Section>
 
+        <Section title="L’atelier de traduction : ce qu’il fait et ne fait pas">
+          <Prose>
+            <p>
+              La section <Link to="/atelier" className="link-underline">Atelier</Link> présente des
+              passages dans leur écriture d’origine, avec translittération, rendu mot à mot et
+              plusieurs traductions françaises datées. Trois précisions s’imposent.
+            </p>
+            <ul className="mt-4 space-y-3">
+              <li>
+                <strong>Le « mot à mot » n’est pas la vraie traduction.</strong> C’est un décalque,
+                volontairement illisible, destiné à montrer l’ordre et la matière de la langue source.
+                Le prendre pour le sens authentique que les traducteurs auraient dissimulé serait le
+                contresens exact que cette section cherche à combattre : une langue ne se lit pas mot
+                par mot.
+              </li>
+              <li>
+                <strong>Les traductions retenues sont des jalons, pas un palmarès.</strong> Elles sont
+                choisies parce qu’elles divergent de façon instructive — Vulgate contre Érasme,
+                Segond contre Chouraqui, Blachère contre Berque — et non parce que l’une serait la
+                bonne. Aucune n’est présentée comme définitive.
+              </li>
+              <li>
+                <strong>Le corpus est un échantillon.</strong> Cinquante-six passages ne sont pas des
+                bibles entières. Ils ont été retenus pour une raison : chacun porte une décision de
+                traduction dont on peut suivre les conséquences historiques.
+              </li>
+            </ul>
+            <p className="mt-4">
+              Les textes originaux sont donnés d’après les éditions de référence courantes — texte
+              massorétique pour l’hébreu, Nestle-Aland pour le grec du Nouveau Testament, édition du
+              Caire pour le Coran, éditions critiques usuelles pour les corpus indiens et chinois. Les
+              variantes manuscrites significatives sont signalées dans l’analyse, non dans le texte.
+            </p>
+          </Prose>
+        </Section>
+
         <Section title="Les limites, honnêtement">
           <div className="space-y-4">
             <Callout tone="warning" label="Un site n’est pas une bibliothèque">
@@ -101,6 +137,13 @@ export default function Method() {
               Les effectifs de fidèles sont des estimations, souvent contestées, et parfois politiquement
               chargées (qui compte comme musulman, comme hindou, comme « sans religion » ?). Les dates
               anciennes sont des fourchettes, pas des faits.
+            </Callout>
+            <Callout tone="warning" label="Des mécanismes ne sont pas des causes">
+              La page <Link to="/emergence" className="link-underline">Émergence</Link> décrit des
+              régularités : crise fondatrice, routinisation du charisme, clôture du canon. Ces
+              régularités éclairent des cas ; elles ne les expliquent pas entièrement et ne
+              permettent aucune prédiction. Chaque mécanisme y est accompagné d’un encadré disant ce
+              qu’il n’explique pas — cet encadré fait partie du contenu, pas de la politesse.
             </Callout>
             <Callout tone="warning" label="Un point de vue situé">
               Ce site est rédigé en français, avec un vocabulaire conceptuel largement issu de la tradition
