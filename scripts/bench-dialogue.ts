@@ -175,8 +175,8 @@ async function run(model: string, task: Task): Promise<Result> {
     return { ok: false, score: 0, max: 1, notes: ['réponse vide'], text: '', ms };
   }
 
-  const { text, sourceIds } = splitSources(raw);
   const known = new Set(voice.anchors.map((a) => a.id));
+  const { text, sourceIds } = splitSources(raw, [...known]);
   const byId = new Map(voice.anchors.map((a) => [a.id, a]));
   const words = text.split(/\s+/).filter(Boolean).length;
 

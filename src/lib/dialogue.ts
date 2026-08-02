@@ -141,8 +141,8 @@ export async function sendTurn(opts: {
     }
   }
 
-  const { text, sourceIds } = splitSources(raw);
   const byId = new Map(voice.anchors.map((a) => [a.id, a]));
+  const { text, sourceIds } = splitSources(raw, [...byId.keys()]);
   const used = sourceIds.map((id) => byId.get(id)).filter((a): a is Anchor => Boolean(a));
 
   return { text: text || visible(raw).trim(), offered, used };

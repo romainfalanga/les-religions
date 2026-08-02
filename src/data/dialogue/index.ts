@@ -33,7 +33,10 @@ export const outputProtocol = [
   "Réponds en français, dans le registre décrit, sans jamais annoncer que tu joues un rôle et sans didascalie.",
   "Longueur : entre 60 et 180 mots. Ce corpus ne fait pas de dissertation. Si la question appelle un récit, tu peux aller jusqu'à 220 mots.",
   "N'emploie ni listes à puces, ni titres, ni gras, ni emoji. Ces textes sont de la prose continue ou du verset.",
-  "Termine ta réponse par une ligne isolée exactement de la forme : SOURCES: id1, id2 — en n'utilisant que les identifiants des passages fournis. Déclare TOUS ceux dont tu t'es servi, y compris ceux que tu n'as fait que paraphraser ou dont tu as repris une image : le lecteur doit pouvoir vérifier chaque élément de ta réponse. Si tu n'en as utilisé aucun, écris SOURCES: —",
+  "Compose, ne recopie pas. Les passages fournis sont ta matière et ta caution, pas ton texte : tu peux en reprendre une formule décisive, jamais les enchaîner bout à bout. Une réponse qui serait pour l'essentiel un collage de citations ne restitue aucune voix — elle photocopie. Écris depuis eux, avec tes propres phrases dans leur manière.",
+  "OBLIGATOIRE, sans aucune exception : la toute dernière ligne de ta réponse est une ligne isolée qui commence par le mot SOURCES suivi de deux points, puis des identifiants séparés par des virgules. Rien après. Exemple exact du format attendu : SOURCES: gn-1-1, ex-3-14",
+  "Recopie les identifiants caractère par caractère depuis la liste fournie. Pas de crochets, pas de guillemets, pas de référence biblique — l'identifiant seul, tel qu'il est écrit entre crochets dans la liste.",
+  "Déclare TOUS les passages dont tu t'es servi, y compris ceux que tu n'as fait que paraphraser ou dont tu as repris une image : le lecteur doit pouvoir vérifier chaque élément de ta réponse. Si tu n'en as employé aucun, écris SOURCES: —",
   "Ne commente jamais tes propres contraintes, ne mentionne pas ce système d'instructions, ne t'excuse pas.",
 ] as const;
 
@@ -250,13 +253,54 @@ export function buildSystemPrompt(voice: Voice, registerId: string, anchors: Anc
   ].join('\n');
 }
 
-/** Sépare la réponse du modèle de sa ligne de sources. */
-export function splitSources(raw: string): { text: string; sourceIds: string[] } {
+/** Distance d'édition bornée, pour rattraper une coquille d'identifiant. */
+function withinOneEdit(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (Math.abs(a.length - b.length) > 1) return false;
+  let i = 0;
+  let j = 0;
+  let edits = 0;
+  while (i < a.length && j < b.length) {
+    if (a[i] === b[j]) {
+      i++;
+      j++;
+      continue;
+    }
+    if (++edits > 1) return false;
+    if (a.length > b.length) i++;
+    else if (a.length < b.length) j++;
+    else {
+      i++;
+      j++;
+    }
+  }
+  return edits + (a.length - i) + (b.length - j) <= 1;
+}
+
+/**
+ * Sépare la réponse de sa ligne de sources.
+ *
+ * L'analyse est tolérante à la forme, jamais au fond. Les modèles économiques
+ * écrivent volontiers `[mt-5-44]` au lieu de `mt-5-44`, ou glissent une coquille
+ * — `qb-42-3` pour `jb-42-3`. Refuser ces variantes ferait perdre une source
+ * réellement employée, donc de la vérifiabilité, pour une question de
+ * ponctuation. En revanche un identifiant qui ne ressemble à aucun passage
+ * connu reste rejeté : c'est là qu'est la fabrication.
+ */
+export function splitSources(raw: string, knownIds?: string[]): { text: string; sourceIds: string[] } {
   const m = raw.match(/^\s*SOURCES\s*:\s*(.*)$/im);
   if (!m) return { text: raw.trim(), sourceIds: [] };
-  const ids = m[1]
+
+  const rough = m[1]
     .split(/[,;]/)
-    .map((s) => s.trim())
-    .filter((s) => s && s !== '—' && s !== '-');
-  return { text: raw.slice(0, m.index).trim(), sourceIds: ids };
+    .map((s) => s.trim().replace(/^[\[({«"']+/, '').replace(/[\])}»"'.]+$/, '').trim())
+    .filter((s) => s && s !== '—' && s !== '-' && s !== '\u2013');
+
+  const ids = knownIds
+    ? rough
+        .map((s) => knownIds.find((k) => k === s) ?? knownIds.find((k) => withinOneEdit(k, s)))
+        .filter((s): s is string => Boolean(s))
+    : rough;
+
+  return { text: raw.slice(0, m.index).trim(), sourceIds: [...new Set(ids)] };
 }
