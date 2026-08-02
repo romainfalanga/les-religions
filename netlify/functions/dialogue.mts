@@ -214,9 +214,13 @@ export default async function handler(request: Request): Promise<Response> {
         model: resolveModel(body.model),
         messages: [{ role: 'system', content: system }, ...messages],
         temperature,
-        // Le corpus ne fait pas de dissertation ; le protocole borne déjà la
-        // longueur, ceci en est le garde-fou dur.
-        max_tokens: 900,
+        // Les modèles à raisonnement (famille GPT-5) imputent leurs jetons de
+        // réflexion sur ce budget : à 900 jetons, ils le consommaient
+        // entièrement et renvoyaient une réponse vide. On élargit, et on
+        // demande un effort de raisonnement minimal — la tâche est une
+        // restitution de style, pas une résolution de problème.
+        max_tokens: 2000,
+        reasoning: { effort: 'low' },
         stream: true,
       }),
     });
