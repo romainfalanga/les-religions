@@ -17,7 +17,47 @@
  */
 
 const ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = 'anthropic/claude-sonnet-4.6';
+
+/**
+ * Modèle par défaut.
+ *
+ * Choisi après mesure sur la tâche réelle : restitution d'un registre
+ * littéraire français sous contrainte stricte, avec déclaration exacte des
+ * passages employés. Voir `scripts/bench-dialogue.ts` pour le protocole.
+ */
+const DEFAULT_MODEL = 'openai/gpt-5-mini';
+
+/**
+ * Modèles autorisés.
+ *
+ * Le paramètre `model` est accepté depuis le client, ce qui permet de comparer
+ * les candidats sans redéployer. La liste ne contient que des modèles
+ * économiques : le pire abus possible est donc quelques centimes, là où laisser
+ * passer un modèle arbitraire exposerait à un usage coûteux.
+ */
+const ALLOWED_MODELS = new Set([
+  'openai/gpt-5-mini',
+  'openai/gpt-5-nano',
+  'openai/gpt-5.6-luna',
+  'openai/gpt-4.1-mini',
+  'google/gemini-2.5-flash',
+  'google/gemini-2.5-flash-lite',
+  'mistralai/mistral-small-3.2-24b-instruct',
+  'mistralai/mistral-medium-3.1',
+  'deepseek/deepseek-v4-flash-0731',
+  'z-ai/glm-4.7-flash',
+  'qwen/qwen3.5-flash-02-23',
+  'anthropic/claude-haiku-4.5',
+]);
+
+function resolveModel(requested: unknown): string {
+  const envModel = process.env.OPENROUTER_MODEL;
+  if (typeof requested === 'string' && ALLOWED_MODELS.has(requested)) return requested;
+  // Une valeur d'environnement explicite prime sur le défaut, même hors liste :
+  // c'est le propriétaire du site qui la fixe, pas un visiteur.
+  if (envModel) return envModel;
+  return DEFAULT_MODEL;
+}
 
 const MAX_SYSTEM = 24_000;
 const MAX_MESSAGE = 2_000;
@@ -63,6 +103,7 @@ interface Incoming {
   system?: unknown;
   messages?: unknown;
   temperature?: unknown;
+  model?: unknown;
 }
 
 const json = (status: number, body: unknown) =>
@@ -87,7 +128,8 @@ export default async function handler(request: Request): Promise<Response> {
     // fonctionnalité est indisponible plutôt que d'échouer à la première question.
     return json(200, {
       configured: Boolean(process.env.OPENROUTER_API_KEY),
-      model: process.env.OPENROUTER_MODEL || DEFAULT_MODEL,
+      model: resolveModel(undefined),
+      alternatives: [...ALLOWED_MODELS],
     });
   }
 
@@ -169,7 +211,7 @@ export default async function handler(request: Request): Promise<Response> {
         'X-Title': 'Atlas des Religions',
       },
       body: JSON.stringify({
-        model: process.env.OPENROUTER_MODEL || DEFAULT_MODEL,
+        model: resolveModel(body.model),
         messages: [{ role: 'system', content: system }, ...messages],
         temperature,
         // Le corpus ne fait pas de dissertation ; le protocole borne déjà la
