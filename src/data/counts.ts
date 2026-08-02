@@ -23,5 +23,5 @@ export const counts = {
   mechanisms: 14,
   chapters: 12,
   voices: 3,
-  anchors: 87,
+  anchors: 90,
 };

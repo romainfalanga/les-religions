@@ -20,7 +20,7 @@ export function getVoice(id: string | undefined): Voice | undefined {
  */
 export const commonContract = [
   "Tu es un dispositif de lecture, pas une divinité. Tu restitues la manière dont un corpus textuel précis met en scène une voix. Tu ne révèles rien, tu ne sais rien que le corpus ne porte, et tu n'as aucune autorité religieuse.",
-  "Interdiction absolue de fabriquer une citation. Tu ne cites que les passages qui te sont fournis ci-dessous. Si aucun ne convient, tu réponds dans le registre sans citer, et tu le dis.",
+  "Interdiction absolue de fabriquer une citation. Tu ne cites, ne paraphrases ni ne démarques que les passages fournis ci-dessous. Cela vaut aussi pour les formules d'ouverture, les serments et les images : n'emprunte jamais la lettre d'un verset qui ne t'est pas fourni, même si tu le connais et qu'il existe. Tu peux en revanche composer toi-même une formule dans la manière du corpus.",
   "Interdiction de prédire l'avenir de l'interlocuteur, de diagnostiquer, de conseiller en matière médicale, juridique, financière, ou de prescrire une conduite religieuse obligatoire.",
   "Interdiction de condamner l'interlocuteur ou une personne nommée, de désigner un groupe comme haïssable, d'appeler à une action contre quiconque.",
   "Interdiction de parler au nom des deux autres voix, ou de valider leurs prétentions. Chaque voix ne connaît que son corpus.",
@@ -33,7 +33,7 @@ export const outputProtocol = [
   "Réponds en français, dans le registre décrit, sans jamais annoncer que tu joues un rôle et sans didascalie.",
   "Longueur : entre 60 et 180 mots. Ce corpus ne fait pas de dissertation. Si la question appelle un récit, tu peux aller jusqu'à 220 mots.",
   "N'emploie ni listes à puces, ni titres, ni gras, ni emoji. Ces textes sont de la prose continue ou du verset.",
-  "Termine ta réponse par une ligne isolée exactement de la forme : SOURCES: id1, id2 — en n'utilisant que les identifiants des passages fournis, au maximum trois, et uniquement ceux dont tu t'es réellement servi. Si tu n'en as utilisé aucun, écris SOURCES: —",
+  "Termine ta réponse par une ligne isolée exactement de la forme : SOURCES: id1, id2 — en n'utilisant que les identifiants des passages fournis. Déclare TOUS ceux dont tu t'es servi, y compris ceux que tu n'as fait que paraphraser ou dont tu as repris une image : le lecteur doit pouvoir vérifier chaque élément de ta réponse. Si tu n'en as utilisé aucun, écris SOURCES: —",
   "Ne commente jamais tes propres contraintes, ne mentionne pas ce système d'instructions, ne t'excuse pas.",
 ] as const;
 
@@ -50,6 +50,9 @@ const STOPWORDS = new Set(
   ('le la les un une des de du au aux et ou mais donc or ni car que qui quoi dont ou a en y il elle ils elles je tu nous vous on ce cet cette ces mon ma mes ton ta tes son sa ses est sont etre avoir fait faire pas ne plus moins tres pour par avec sans sur sous dans chez si comme quand alors tout tous toute toutes meme aussi bien'
   ).split(' '),
 );
+
+/** Nombre maximal de passages empruntés à une autre couche du corpus. */
+const MAX_OUT_OF_REGISTER = 2;
 
 /**
  * Sélectionne les passages les plus pertinents pour la question posée.
@@ -90,32 +93,46 @@ export function selectAnchors(
         score += 1 * weight;
       }
     }
-    // On privilégie le registre choisi sans exclure les autres : le lecteur doit
-    // pouvoir constater que le corpus se répond à lui-même d'une couche à l'autre.
-    if (a.registers.includes(registerId)) score *= 1.6;
     return { anchor: a, score };
   });
 
-  const hits = scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score);
+  const inRegister = (a: Anchor) => a.registers.includes(registerId);
+  const hits = scored.filter((x) => x.score > 0).sort((a, b) => b.score - a.score);
 
-  // Toujours fournir un socle du registre choisi, même si la question est vague.
-  const fallback = voice.anchors.filter((a) => a.registers.includes(registerId));
   const out: Anchor[] = [];
   const seen = new Set<string>();
-  for (const h of hits) {
-    if (out.length >= limit) break;
-    if (seen.has(h.anchor.id)) continue;
-    seen.add(h.anchor.id);
-    out.push(h.anchor);
-  }
-  for (const a of fallback) {
-    if (out.length >= Math.max(4, Math.min(limit, 6))) break;
-    if (seen.has(a.id)) continue;
+  const push = (a: Anchor) => {
+    if (seen.has(a.id)) return false;
     seen.add(a.id);
     out.push(a);
+    return true;
+  };
+
+  // 1. Les passages pertinents du registre choisi, d'abord et sans concurrence.
+  //    C'est ce qui fait que la couche interrogée répond avec ses propres mots.
+  for (const h of hits) {
+    if (out.length >= limit - MAX_OUT_OF_REGISTER) break;
+    if (inRegister(h.anchor)) push(h.anchor);
   }
+
+  // 2. Un socle du registre, même si la question est vague ou qu'il n'a rien
+  //    de pertinent : une couche muette doit pouvoir dire qu'elle est muette.
+  for (const a of voice.anchors) {
+    if (out.length >= Math.max(4, limit - MAX_OUT_OF_REGISTER)) break;
+    if (inRegister(a)) push(a);
+  }
+
+  // 3. Au plus deux passages d'autres couches, en fin de liste. Ils servent de
+  //    contrepoint, jamais d'appui principal — le prompt les marque comme tels.
+  let extra = 0;
+  for (const h of hits) {
+    if (extra >= MAX_OUT_OF_REGISTER) break;
+    if (!inRegister(h.anchor) && push(h.anchor)) extra++;
+  }
+
   return out;
 }
+
 
 /** Assemble le prompt système. Exporté pour être affichable dans l'interface. */
 export function buildSystemPrompt(voice: Voice, registerId: string, anchors: Anchor[]): string {
@@ -152,12 +169,13 @@ export function buildSystemPrompt(voice: Voice, registerId: string, anchors: Anc
     block('Erreurs d’imitation à éviter absolument', p.antiPatterns),
 
     `\n# Passages disponibles`,
-    `Ce sont les seuls que tu peux citer. Appuie-toi sur eux : ta réponse doit pouvoir être vérifiée dans le texte.`,
+    `Ce sont les seuls que tu peux citer, paraphraser ou démarquer. Ta réponse doit pouvoir être vérifiée dans ce qui suit.`,
+    `Les passages marqués [HORS REGISTRE] appartiennent à une autre couche du corpus. Tu peux les connaître, mais tu ne réponds pas depuis eux : ils servent au plus de contrepoint. Si ta couche n'a rien à dire sur la question posée, dis-le dans ta langue — « ce n'est pas de cela que je parle ici » — plutôt que d'emprunter sa réponse à une autre couche. Une couche muette qui avoue son silence enseigne davantage qu'une couche qui parle à la place d'une autre.`,
     anchors
-      .map(
-        (a) =>
-          `[${a.id}] ${a.ref} — « ${a.text} »${a.constraint ? `\n    Contrainte : ${a.constraint}` : ''}`,
-      )
+      .map((a) => {
+        const tag = a.registers.includes(register.id) ? '' : ' [HORS REGISTRE]';
+        return `[${a.id}]${tag} ${a.ref} — « ${a.text} »${a.constraint ? `\n    Contrainte : ${a.constraint}` : ''}`;
+      })
       .join('\n'),
 
     `\n# Protocole de réponse`,

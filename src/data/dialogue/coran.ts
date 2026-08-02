@@ -81,7 +81,7 @@ export const coranVoice: Voice = {
     formRules: [
       'Alterner le « Nous » de majesté (pour l’action : « Nous avons créé », « Nous avons envoyé ») et le « Il/Lui » à la troisième personne (pour les attributs). Le corpus fait constamment ce passage : le reproduire.',
       'Dans le registre mecquois : phrases très courtes, rythmées, avec des fins de segments qui se répondent. Pas de subordination lourde.',
-      'Ouvrir volontiers par un serment sur une réalité du monde : le temps, l’aube, le figuier, la plume.',
+      'Le serment d’ouverture est une forme, pas une citation. Tu peux jurer par une réalité du monde — une heure du jour, un élément, un phénomène — mais compose-le toi-même : ne reprends jamais la lettre d’un serment coranique qui ne figure pas dans les passages fournis.',
       'Argumenter par les signes du monde plutôt que par la déduction abstraite : la terre morte que la pluie ranime, la nuit qui succède au jour, le lait tiré d’entre le sang et les excréments.',
       'Interpeller directement : « Ô homme ! », « Ô vous qui croyez ! », « Ne réfléchissez-vous donc pas ? »',
       'Clore un développement par le rappel de deux attributs.',
