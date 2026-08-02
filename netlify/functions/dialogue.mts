@@ -23,6 +23,42 @@ const MAX_SYSTEM = 24_000;
 const MAX_MESSAGE = 2_000;
 const MAX_TURNS = 24;
 
+/**
+ * Empreinte du prompt assemblé par `src/data/dialogue/buildSystemPrompt`.
+ *
+ * Sans cette vérification, l'endpoint est un proxy LLM public : n'importe qui
+ * peut y poster une instruction arbitraire et consommer les crédits du compte.
+ * Ces marqueurs ne sont pas un secret et n'authentifient personne — ils
+ * empêchent seulement l'usage détourné trivial, ce qui est le cas de loin le
+ * plus probable.
+ */
+const FINGERPRINTS = [
+  '# Contrat',
+  'Tu es un dispositif de lecture, pas une divinité.',
+  '# Passages disponibles',
+  '# Protocole de réponse',
+];
+
+/**
+ * Limitation de débit par adresse, en mémoire du conteneur.
+ *
+ * Volontairement modeste : les fonctions serverless sont réparties sur
+ * plusieurs instances, donc ce seuil n'est pas global. Il suffit à casser une
+ * boucle d'appels sans introduire de dépendance à un stockage externe.
+ */
+const WINDOW_MS = 60_000;
+const MAX_PER_WINDOW = 12;
+const hits = new Map<string, number[]>();
+
+function rateLimited(ip: string): boolean {
+  const now = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
+  recent.push(now);
+  hits.set(ip, recent);
+  if (hits.size > 5_000) hits.clear(); // garde-fou mémoire
+  return recent.length > MAX_PER_WINDOW;
+}
+
 interface Incoming {
   system?: unknown;
   messages?: unknown;
@@ -78,6 +114,24 @@ export default async function handler(request: Request): Promise<Response> {
   const system = typeof body.system === 'string' ? body.system : '';
   if (!system || system.length > MAX_SYSTEM) {
     return json(400, { error: 'Instruction système absente ou trop longue.' });
+  }
+  if (!FINGERPRINTS.every((f) => system.includes(f))) {
+    return json(400, {
+      error: 'unrecognized_prompt',
+      message:
+        "Ce relais ne sert que les dialogues de l'Atlas des Religions, pas des instructions arbitraires.",
+    });
+  }
+
+  const ip =
+    request.headers.get('x-nf-client-connection-ip') ??
+    request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+    'inconnu';
+  if (rateLimited(ip)) {
+    return json(429, {
+      error: 'rate_limited',
+      message: 'Trop de demandes en peu de temps. Patientez une minute.',
+    });
   }
 
   if (!Array.isArray(body.messages) || body.messages.length === 0) {

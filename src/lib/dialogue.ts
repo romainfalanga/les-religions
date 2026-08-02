@@ -89,6 +89,12 @@ export async function sendTurn(opts: {
       'not_configured',
     );
   }
+  if (res.status === 429) {
+    throw new DialogueError(
+      'Trop de demandes en peu de temps. Patientez une minute avant de reprendre.',
+      'upstream',
+    );
+  }
   if (!res.ok || !res.body) {
     const detail = await res.text().catch(() => '');
     throw new DialogueError(detail.slice(0, 300) || `Erreur ${res.status}.`, 'upstream');

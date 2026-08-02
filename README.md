@@ -132,6 +132,12 @@ et affiche proprement qu'elle attend sa configuration.
 En local, lancez `npx netlify dev` et non `npm run dev` : Vite seul ne sert
 pas les fonctions.
 
+Le relais est un point d'accès public : il refuse toute instruction système
+qui ne porte pas l'empreinte du prompt assemblé par l'application, et limite
+le débit par adresse. Cela empêche l'usage détourné comme proxy LLM
+générique, mais n'authentifie personne — si le trafic devenait un problème,
+la suite serait un jeton signé ou le rate limiting natif de Netlify.
+
 ### Déploiement
 
 Hébergé sur Netlify. `netlify.toml` fixe la commande de build, le dossier publié,
