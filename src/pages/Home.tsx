@@ -1,87 +1,25 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { traditions } from '../data/traditions';
-import { themes } from '../data/themes';
-import { learningPaths } from '../data/influences';
+import { chapters, totalMinutes } from '../data/course';
+import { keys } from '../data/orientation';
 import { counts } from '../data/counts';
-import { Chip, Stat } from '../components/ui';
-import { tint } from '../lib/utils';
-
-const entries = [
-  {
-    to: '/traditions',
-    title: 'Les traditions',
-    desc: 'Vingt-cinq familles religieuses : origines, croyances, pratiques, branches, idées reçues et débats vivants.',
-    icon: '◍',
-  },
-  {
-    to: '/personnages',
-    title: 'Les personnages',
-    desc: 'Fondateurs, prophètes, sages, mystiques et réformateurs — avec, pour chacun, ce que l’histoire établit et ce que la tradition affirme.',
-    icon: '☗',
-  },
-  {
-    to: '/textes',
-    title: 'Les textes',
-    desc: 'Structure, enseignements, passages clés, histoire de la transmission, apport de la recherche critique, et conseils de lecture.',
-    icon: '❦',
-  },
-  {
-    to: '/chronologie',
-    title: 'La chronologie',
-    desc: 'De Göbekli Tepe à nos jours : une frise filtrable par tradition, par époque et par type d’événement.',
-    icon: '⟿',
-  },
-  {
-    to: '/carte',
-    title: 'La carte',
-    desc: 'Cent soixante-quinze lieux et vingt-deux routes de diffusion, filtrables par époque : voir où et quand tout cela s’est passé.',
-    icon: '⌖',
-  },
-  {
-    to: '/atelier',
-    title: 'L’atelier de traduction',
-    desc: 'Les textes dans leur écriture d’origine, translittérés, rendus mot à mot, puis confrontés à leurs traductions françaises successives.',
-    icon: 'ℵ',
-  },
-  {
-    to: '/emergence',
-    title: 'L’émergence',
-    desc: 'Les mécanismes par lesquels une religion naît, fixe son canon, se divise et se diffuse — avec ce que chacun n’explique pas.',
-    icon: '⌘',
-  },
-  {
-    to: '/comparaisons',
-    title: 'Les comparaisons',
-    desc: 'Une question, toutes les réponses : Dieu, l’au-delà, le mal, la violence, les femmes, le rituel, la mystique.',
-    icon: '⇹',
-  },
-  {
-    to: '/influences',
-    title: 'L’arbre des influences',
-    desc: 'Qui a emprunté quoi à qui : filiations, schismes, emprunts, réactions et syncrétismes, documentés un par un.',
-    icon: '❧',
-  },
-  {
-    to: '/notions',
-    title: 'Le glossaire',
-    desc: 'Karma, dharma, grâce, tawhid, canon, tabou : les notions avec leurs équivalents croisés et les faux amis à éviter.',
-    icon: '✱',
-  },
-  {
-    to: '/parcours',
-    title: 'Les parcours guidés',
-    desc: 'Neuf itinéraires structurés, de la première approche à l’exégèse critique, pour ne pas se perdre.',
-    icon: '⟐',
-  },
-];
+import { getDone, subscribeProgress } from '../lib/progress';
 
 export default function Home() {
-  const featured = traditions.filter((t) =>
-    ['judaisme', 'christianisme', 'islam', 'hindouisme', 'bouddhisme', 'taoisme'].includes(t.id),
-  );
+  const [done, setDone] = useState<string[]>([]);
+  useEffect(() => {
+    const sync = () => setDone(getDone());
+    sync();
+    return subscribeProgress(sync);
+  }, []);
+
+  const doneSet = new Set(done);
+  const next = chapters.find((c) => !doneSet.has(c.id));
+  const started = doneSet.size > 0;
 
   return (
     <div>
+      {/* Un seul point d'entrée dominant ---------------------------------- */}
       <section className="relative overflow-hidden border-b border-ink-200">
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.045]"
@@ -92,177 +30,186 @@ export default function Home() {
           }}
         />
         <div className="container-page relative py-16 sm:py-24">
-          <p className="eyebrow mb-5">Histoire · Figures · Textes · Corrélations</p>
-          <h1 className="max-w-4xl font-serif text-4xl font-semibold leading-[1.1] text-ink-950 sm:text-6xl">
-            Comprendre les religions — leur histoire, leurs textes et ce qu’elles ont en commun.
+          <p className="eyebrow mb-5">Un cours, puis une encyclopédie</p>
+          <h1 className="max-w-3xl font-serif text-4xl font-semibold leading-[1.08] text-ink-950 sm:text-[3.4rem]">
+            Comprendre les religions — dans l’ordre, sans se noyer.
           </h1>
-          <p className="mt-6 max-w-2xl text-[1.05rem] leading-relaxed text-ink-700">
-            Un atlas construit pour saisir non seulement ce que chaque tradition affirme, mais{' '}
-            <em>pourquoi</em> elle l’affirme, <em>d’où</em> cela vient, et <em>ce qui circule</em> d’une
-            religion à l’autre. Les affirmations de foi y sont systématiquement distinguées de ce que la
-            recherche historique établit.
+          <p className="mt-6 max-w-2xl text-[1.08rem] leading-relaxed text-ink-700">
+            Commencez par le cours : douze chapitres courts qui vous donnent de quoi situer
+            n’importe quelle information. L’encyclopédie — {counts.figures} personnages,{' '}
+            {counts.texts} textes, {counts.events} événements — vient après, quand vous saurez quoi
+            en faire.
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link
-              to="/parcours/decouverte"
-              className="rounded-lg bg-ink-900 px-5 py-2.5 text-sm font-medium text-parchment transition hover:bg-ink-800"
+              to={started && next ? `/cours/${next.id}` : '/commencer'}
+              className="rounded-lg bg-ink-900 px-6 py-3.5 text-center text-[0.95rem] font-medium text-parchment transition hover:bg-ink-800"
             >
-              Commencer par le début
+              {started && next
+                ? `Reprendre — chapitre ${next.n}`
+                : started
+                  ? 'Cours terminé — relire'
+                  : 'Commencer ici'}
             </Link>
             <Link
-              to="/chronologie"
-              className="rounded-lg border border-ink-300 bg-white/60 px-5 py-2.5 text-sm font-medium text-ink-800 transition hover:border-ink-400"
+              to="/explorer"
+              className="rounded-lg border border-ink-300 bg-white/60 px-6 py-3.5 text-center text-[0.95rem] text-ink-800 transition hover:border-ink-400"
             >
-              Voir la chronologie
-            </Link>
-            <Link
-              to="/methode"
-              className="rounded-lg px-5 py-2.5 text-sm font-medium text-ink-600 transition hover:text-ink-900"
-            >
-              Comment ce site est fait →
+              Je sais déjà ce que je cherche
             </Link>
           </div>
 
-          <div className="mt-12 grid grid-cols-2 gap-6 border-t border-ink-200 pt-8 sm:grid-cols-3 lg:grid-cols-6">
-            <Stat value={String(counts.traditions)} label="traditions" />
-            <Stat value={String(counts.figures)} label="personnages" />
-            <Stat value={String(counts.texts)} label="textes" />
-            <Stat value={String(counts.events)} label="événements" />
-            <Stat value={String(counts.places)} label="lieux cartographiés" />
-            <Stat value={String(counts.corpusUnits)} label="passages en langue originale" />
-          </div>
+          {started && (
+            <div className="mt-6 max-w-xs">
+              <div className="h-1.5 overflow-hidden rounded-full bg-ink-200">
+                <div
+                  className="h-full rounded-full bg-ink-800 transition-all"
+                  style={{ width: `${(doneSet.size / chapters.length) * 100}%` }}
+                />
+              </div>
+              <p className="mt-1.5 text-xs text-ink-500">
+                {doneSet.size} chapitre{doneSet.size > 1 ? 's' : ''} sur {chapters.length}
+              </p>
+            </div>
+          )}
+
+          <p className="mt-8 text-sm text-ink-500">
+            {totalMinutes} minutes de lecture pour le cours entier · gratuit · sans compte
+          </p>
         </div>
       </section>
 
       <div className="container-page">
-        <section className="py-12 sm:py-16">
-          <h2 className="section-title">Par où entrer</h2>
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {entries.map((e) => (
-              <Link key={e.to} to={e.to} className="card card-hover group flex flex-col p-5">
-                <span className="mb-3 text-2xl text-ink-400 transition group-hover:text-ink-700">{e.icon}</span>
-                <h3 className="font-serif text-lg font-semibold text-ink-950">{e.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink-600">{e.desc}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="border-t border-ink-200 py-12 sm:py-16">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <h2 className="section-title">Les grandes traditions</h2>
-              <p className="mt-1.5 text-sm text-ink-600">
-                Chaque fiche commence par une question : celle à laquelle la tradition répond en priorité.
-              </p>
-            </div>
-            <Link to="/traditions" className="link-underline shrink-0 text-sm text-ink-700">
-              Toutes les traditions →
-            </Link>
-          </div>
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((t) => (
+        {/* Ce que le cours défait ----------------------------------------- */}
+        <section className="py-14 sm:py-16">
+          <h2 className="section-title">Sept idées reçues, et ce qui les remplace</h2>
+          <p className="mt-1.5 max-w-2xl text-sm text-ink-600">
+            Tant qu’une conception erronée n’est pas nommée, elle résiste à tout ce qu’on apprend
+            ensuite et revient intacte. Le cours commence donc par les désigner.
+          </p>
+          <div className="mt-7 space-y-2.5">
+            {keys.map((k) => (
               <Link
-                key={t.id}
-                to={`/traditions/${t.id}`}
-                className="card card-hover flex flex-col p-5"
-                style={{ borderTopColor: t.color, borderTopWidth: 3 }}
+                key={k.id}
+                to="/commencer"
+                className="card card-hover flex flex-col gap-1.5 p-5 sm:flex-row sm:items-baseline sm:gap-6"
               >
-                <div className="flex items-center gap-3">
-                  <span
-                    className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-lg"
-                    style={{ backgroundColor: tint(t.color, 0.14), color: t.color }}
-                  >
-                    {t.symbol}
-                  </span>
-                  <div className="min-w-0">
-                    <h3 className="truncate font-serif text-lg font-semibold text-ink-950">{t.name}</h3>
-                    <p className="truncate text-xs text-ink-500">{t.adherents}</p>
-                  </div>
-                </div>
-                <p className="prose-serif mt-3 text-[0.95rem]">{t.tagline}</p>
-                <p className="mt-3 border-t border-ink-100 pt-3 text-xs italic text-ink-500">
-                  {t.centralQuestion}
-                </p>
+                <span className="w-full text-sm text-ink-500 line-through decoration-ink-400 sm:w-[38%]">
+                  {k.common}
+                </span>
+                <span className="hidden shrink-0 text-ink-300 sm:inline" aria-hidden>
+                  →
+                </span>
+                <span className="flex-1 font-serif text-[1.02rem] font-semibold leading-snug text-ink-950">
+                  {k.key}
+                </span>
               </Link>
             ))}
           </div>
         </section>
 
-        <section className="border-t border-ink-200 py-12 sm:py-16">
-          <h2 className="section-title">Trois questions, toutes les réponses</h2>
+        {/* Trois outils, pas onze ----------------------------------------- */}
+        <section className="border-t border-ink-200 py-14 sm:py-16">
+          <h2 className="section-title">Trois outils que vous ne trouverez pas ailleurs</h2>
           <p className="mt-1.5 max-w-2xl text-sm text-ink-600">
-            La comparaison est le meilleur instrument de compréhension : elle révèle qu’une tradition se
-            définit autant par la question qu’elle pose que par la réponse qu’elle donne.
+            Le reste de l’atlas est une encyclopédie classique. Ces trois-là ne le sont pas.
           </p>
-          <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-            {themes.slice(0, 3).map((th) => (
-              <Link key={th.id} to={`/comparaisons/${th.id}`} className="card card-hover p-6">
-                <span className="text-2xl text-ink-400">{th.icon}</span>
-                <h3 className="mt-3 font-serif text-xl font-semibold text-ink-950">{th.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink-600">{th.question}</p>
-                <p className="mt-4 text-xs text-ink-500">{th.positions.length} positions comparées</p>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="border-t border-ink-200 py-12 sm:py-16">
-          <h2 className="section-title">Aller au texte, et voir comment il a été fait</h2>
-          <p className="mt-1.5 max-w-2xl text-sm text-ink-600">
-            Deux outils qui font le même travail par deux bouts : l’un montre ce que devient une
-            phrase quand elle change de langue, l’autre ce que devient une prédication quand elle
-            devient une institution.
-          </p>
-          <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <Link to="/atelier" className="card card-hover p-6">
+          <div className="mt-7 grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <Link to="/atelier" className="card card-hover flex flex-col p-6">
               <span className="text-2xl text-ink-400">ℵ</span>
               <h3 className="mt-3 font-serif text-xl font-semibold text-ink-950">
-                Atelier de traduction
+                L’atelier de traduction
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink-600">
-                Hébreu, grec, arabe, sanskrit, pāli, chinois, gurmukhī. Pour chaque passage : le
-                texte original, sa translittération, un mot à mot volontairement rugueux, plusieurs
-                traductions françaises datées, les mots où tout se joue, et l’analyse du biais.
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-600">
+                Les textes dans leur écriture d’origine, confrontés à leurs traductions françaises
+                successives. On y voit le moment exact où le sens bascule — et pourquoi certains de
+                ces basculements ont déclenché des schismes.
               </p>
               <p className="mt-4 text-xs text-ink-500">
                 {counts.corpusBooks} corpus · {counts.corpusUnits} passages
               </p>
             </Link>
-            <Link to="/emergence" className="card card-hover p-6">
-              <span className="text-2xl text-ink-400">⌘</span>
-              <h3 className="mt-3 font-serif text-xl font-semibold text-ink-950">
-                Comment une religion naît
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-ink-600">
-                Crise fondatrice, autorité charismatique, échec réinterprété, passage à l’écrit,
-                clôture du canon, invention de l’hérésie, crise de succession, alliance avec le
-                pouvoir, inculturation, retour aux sources, sécularisation.
+
+            <Link to="/carte" className="card card-hover flex flex-col p-6">
+              <span className="text-2xl text-ink-400">⌖</span>
+              <h3 className="mt-3 font-serif text-xl font-semibold text-ink-950">La carte animée</h3>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-600">
+                Un curseur temporel de −100 000 à aujourd’hui, sans frontières modernes. On voit
+                naître les foyers, s’ouvrir les routes, se déplacer les centres — ce qu’aucune
+                chronologie linéaire ne montre.
               </p>
-              <p className="mt-4 text-xs text-ink-500">{counts.mechanisms} mécanismes comparés</p>
+              <p className="mt-4 text-xs text-ink-500">
+                {counts.places} lieux · {counts.routes} routes
+              </p>
+            </Link>
+
+            <Link to="/dialogues" className="card card-hover flex flex-col p-6">
+              <span className="text-2xl text-ink-400">✧</span>
+              <h3 className="mt-3 font-serif text-xl font-semibold text-ink-950">
+                Parler aux textes
+              </h3>
+              <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-600">
+                Interroger la voix divine telle que chacun des trois corpus monothéistes la met en
+                scène — et changer de couche textuelle pour entendre le même Dieu ne pas répondre
+                pareil. Chaque réponse est vérifiable dans les passages fournis.
+              </p>
+              <p className="mt-4 text-xs text-ink-500">3 voix · 8 registres textuels</p>
             </Link>
           </div>
         </section>
 
-        <section className="border-t border-ink-200 py-12 sm:py-16">
-          <h2 className="section-title">Parcours guidés</h2>
-          <p className="mt-1.5 max-w-2xl text-sm text-ink-600">
-            Une masse de contenu sans itinéraire est inutilisable. Ces parcours enchaînent les fiches dans un
-            ordre qui construit la compréhension.
-          </p>
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {learningPaths.slice(0, 6).map((p) => (
-              <Link key={p.id} to={`/parcours/${p.id}`} className="card card-hover p-5">
-                <div className="flex items-center gap-2">
-                  <Chip>{p.level}</Chip>
-                  <span className="text-xs text-ink-500">{p.duration}</span>
-                </div>
-                <h3 className="mt-3 font-serif text-lg font-semibold text-ink-950">{p.title}</h3>
-                <p className="mt-1.5 text-sm text-ink-600">{p.subtitle}</p>
-                <p className="mt-3 text-xs text-ink-500">{p.steps.length} étapes</p>
+        {/* Le parti pris --------------------------------------------------- */}
+        <section className="border-t border-ink-200 py-14 sm:py-16">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1.4fr_1fr]">
+            <div>
+              <h2 className="section-title">Le parti pris</h2>
+              <p className="prose-serif mt-4">
+                Trois registres sont distingués partout, systématiquement : ce qu’une tradition
+                affirme d’elle-même, ce que la recherche historique permet d’établir, et ce que les
+                autres traditions en disent. Quand ils divergent, l’atlas le signale au lieu de
+                lisser.
+              </p>
+              <p className="prose-serif mt-3">
+                Chaque personnage porte un degré d’attestation explicite. Chaque emprunt entre
+                traditions est daté et pesé. Chaque traduction discutée est confrontée à ses
+                concurrentes. Et chaque mécanisme d’explication est accompagné de ce qu’il
+                n’explique pas — parce qu’une théorie qui explique tout n’explique rien.
+              </p>
+              <Link to="/methode" className="link-underline mt-5 inline-block text-sm text-ink-700">
+                Méthode, partis pris et limites assumées →
               </Link>
-            ))}
+            </div>
+
+            <div className="card p-6">
+              <p className="eyebrow mb-3">Ce que contient l’encyclopédie</p>
+              <dl className="space-y-2 text-sm">
+                {(
+                  [
+                    [counts.traditions, 'traditions'],
+                    [counts.figures, 'personnages'],
+                    [counts.texts, 'textes'],
+                    [counts.events, 'événements'],
+                    [counts.places, 'lieux cartographiés'],
+                    [counts.themes, 'dossiers comparatifs'],
+                    [counts.concepts, 'notions'],
+                    [counts.influences, 'liens d’influence'],
+                    [counts.corpusUnits, 'passages en langue originale'],
+                  ] as [number, string][]
+                ).map(([n, label]) => (
+                  <div key={label} className="flex items-baseline justify-between gap-4">
+                    <dt className="text-ink-600">{label}</dt>
+                    <dd className="font-mono text-ink-950">{n}</dd>
+                  </div>
+                ))}
+              </dl>
+              <Link
+                to="/explorer"
+                className="mt-5 block rounded-lg border border-ink-300 px-4 py-2 text-center text-sm text-ink-800 transition hover:border-ink-400"
+              >
+                Ouvrir l’encyclopédie
+              </Link>
+            </div>
           </div>
         </section>
       </div>

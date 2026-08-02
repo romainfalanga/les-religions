@@ -21,4 +21,7 @@ export const counts = {
   corpusBooks: 11,
   corpusUnits: 56,
   mechanisms: 14,
+  chapters: 12,
+  voices: 3,
+  anchors: 87,
 };

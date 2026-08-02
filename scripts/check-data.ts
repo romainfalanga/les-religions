@@ -20,6 +20,9 @@ import { places, routes } from '../src/data/geo';
 import { corpusBooks } from '../src/data/corpus';
 import { mechanisms, canonLadder } from '../src/data/emergence';
 import { counts as declared } from '../src/data/counts';
+import { chapters, parts } from '../src/data/course';
+import { keys, doors } from '../src/data/orientation';
+import { voices, buildSystemPrompt, selectAnchors } from '../src/data/dialogue';
 
 type Problem = { where: string; what: string };
 const problems: Problem[] = [];
@@ -176,6 +179,102 @@ for (const m of mechanisms) {
 }
 if (canonLadder.length === 0) problems.push({ where: 'emergence', what: 'échelle de canonisation vide' });
 
+// --- cours -------------------------------------------------------------------
+assertUnique('course', chapters.map((c) => c.id));
+const partIds = new Set(parts.map((p) => p.id));
+const knownRoutes = new Set([
+  '/', '/commencer', '/cours', '/explorer', '/traditions', '/personnages', '/textes',
+  '/chronologie', '/carte', '/atelier', '/emergence', '/dialogues', '/comparaisons',
+  '/notions', '/influences', '/parcours', '/methode',
+]);
+const knownPath = (path: string) => {
+  const base = path.split('?')[0].split('#')[0];
+  if (knownRoutes.has(base)) return true;
+  // Chemins de détail : /cours/x, /parcours/x, /dialogues/x…
+  const [, section, id] = base.split('/');
+  if (section === 'cours') return chapters.some((c) => c.id === id);
+  if (section === 'parcours') return learningPaths.some((p) => p.id === id);
+  if (section === 'dialogues') return voices.some((v) => v.id === id);
+  if (section === 'comparaisons') return themeIds.has(id);
+  return knownRoutes.has('/' + section);
+};
+
+for (const c of chapters) {
+  if (!partIds.has(c.part)) problems.push({ where: `chapitre/${c.id}`, what: `partie inconnue : « ${c.part} »` });
+  if (c.blocks.length < 2 || c.blocks.length > 4) {
+    problems.push({ where: `chapitre/${c.id}`, what: `${c.blocks.length} blocs : la charge cognitive visée est de 2 à 4` });
+  }
+  if (c.checks.length < 3) {
+    problems.push({ where: `chapitre/${c.id}`, what: `${c.checks.length} question(s) de rappel : au moins 3 attendues` });
+  }
+  for (const l of c.explore) {
+    const map: Record<string, Set<string>> = {
+      tradition: traditionIds, figure: figureIds, text: textIds,
+      theme: themeIds, concept: conceptIds, event: eventIds,
+    };
+    if (l.kind === 'page') {
+      if (!l.path || !knownPath(l.path)) {
+        problems.push({ where: `chapitre/${c.id}`, what: `chemin inconnu : « ${l.path} »` });
+      }
+    } else {
+      const set = map[l.kind];
+      if (set && !set.has(l.id)) {
+        problems.push({ where: `chapitre/${c.id}`, what: `${l.kind} inconnu : « ${l.id} »` });
+      }
+    }
+  }
+}
+if (chapters.some((c, i) => c.n !== i + 1)) {
+  problems.push({ where: 'course', what: 'la numérotation des chapitres n’est pas continue' });
+}
+
+// --- organisateur préalable --------------------------------------------------
+for (const k of [...keys, ...doors]) {
+  const path = 'path' in k ? k.path : '';
+  if (!knownPath(path)) problems.push({ where: `orientation/${k.id}`, what: `chemin inconnu : « ${path} »` });
+}
+
+// --- dialogues ---------------------------------------------------------------
+assertUnique('dialogue/voices', voices.map((v) => v.id));
+for (const v of voices) {
+  if (!traditionIds.has(v.tradition)) {
+    problems.push({ where: `voix/${v.id}`, what: `tradition inconnue : « ${v.tradition} »` });
+  }
+  assertUnique(`voix/${v.id}/anchors`, v.anchors.map((a) => a.id));
+  assertUnique(`voix/${v.id}/registers`, v.registers.map((r) => r.id));
+  const regIds = new Set(v.registers.map((r) => r.id));
+  for (const a of v.anchors) {
+    if (a.registers.length === 0) {
+      problems.push({ where: `voix/${v.id}/${a.id}`, what: 'aucun registre' });
+    }
+    for (const r of a.registers) {
+      if (!regIds.has(r)) {
+        problems.push({ where: `voix/${v.id}/${a.id}`, what: `registre inconnu : « ${r} »` });
+      }
+    }
+    if (a.keywords.length < 3) {
+      problems.push({ where: `voix/${v.id}/${a.id}`, what: 'moins de trois mots-clés : la sélection lexicale sera aveugle' });
+    }
+  }
+  // Chaque registre doit disposer d'assez de passages pour tenir une conversation.
+  for (const r of v.registers) {
+    const n = v.anchors.filter((a) => a.registers.includes(r.id)).length;
+    if (n < 3) {
+      problems.push({ where: `voix/${v.id}/registre/${r.id}`, what: `${n} passage(s) seulement` });
+    }
+  }
+  // Le prompt assemblé doit rester sous la borne acceptée par le relais.
+  for (const r of v.registers) {
+    const prompt = buildSystemPrompt(v, r.id, selectAnchors(v, r.id, []));
+    if (prompt.length > 24_000) {
+      problems.push({ where: `voix/${v.id}/registre/${r.id}`, what: `prompt de ${prompt.length} caractères : au-delà de la limite du relais (24 000)` });
+    }
+    if (!prompt.includes('SOURCES:')) {
+      problems.push({ where: `voix/${v.id}/registre/${r.id}`, what: 'le protocole de sources a disparu du prompt' });
+    }
+  }
+}
+
 // --- volumétrie déclarée (utilisée par la page d'accueil) ---------------------
 const actual: typeof declared = {
   traditions: traditions.length,
@@ -191,6 +290,9 @@ const actual: typeof declared = {
   corpusBooks: corpusBooks.length,
   corpusUnits: corpusBooks.reduce((n, b) => n + b.units.length, 0),
   mechanisms: mechanisms.length,
+  chapters: chapters.length,
+  voices: voices.length,
+  anchors: voices.reduce((n, v) => n + v.anchors.length, 0),
 };
 for (const [k, v] of Object.entries(actual) as [keyof typeof declared, number][]) {
   if (declared[k] !== v) {
@@ -216,6 +318,9 @@ const counts = {
   'corpus (livres)': corpusBooks.length,
   'corpus (passages)': corpusBooks.reduce((n, b) => n + b.units.length, 0),
   mécanismes: mechanisms.length,
+  'chapitres de cours': chapters.length,
+  'voix de dialogue': voices.length,
+  'passages ancrés': voices.reduce((n, v) => n + v.anchors.length, 0),
 };
 
 console.log('Contenu de l’atlas');

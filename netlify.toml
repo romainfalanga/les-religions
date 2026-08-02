@@ -5,6 +5,18 @@
 [build.environment]
   NODE_VERSION = "22"
 
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# Le relais OpenRouter. La clé API vit uniquement dans l'environnement Netlify ;
+# elle n'est jamais servie au navigateur.
+[[redirects]]
+  from = "/api/dialogue"
+  to = "/.netlify/functions/dialogue"
+  status = 200
+  force = true
+
 # Le site utilise un routeur à # : une seule page réelle suffit.
 # Cette règle couvre néanmoins les accès directs à un chemin.
 [[redirects]]

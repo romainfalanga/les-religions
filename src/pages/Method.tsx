@@ -84,6 +84,87 @@ export default function Method() {
           </div>
         </Section>
 
+        <Section title="Comment ce site est organisé, et pourquoi">
+          <Prose>
+            <p>
+              L’atlas a d’abord été construit comme une encyclopédie : onze rubriques de même
+              poids, à explorer librement. C’était une erreur pédagogique. Une masse d’informations
+              sans structure d’accueil ne s’apprend pas — le lecteur n’a rien à quoi accrocher ce
+              qu’il lit, et la liberté de commencer partout revient à ne pas savoir commencer.
+            </p>
+            <p className="mt-3">L’organisation actuelle applique quatre résultats bien établis :</p>
+            <ul className="mt-4 space-y-3">
+              <li>
+                <strong>L’organisateur préalable</strong> (Ausubel, 1960). Avant le détail, une
+                structure plus générale à laquelle il pourra s’accrocher : ce sont les{' '}
+                <Link to="/commencer" className="link-underline">sept idées</Link>, à lire en dix
+                minutes. Sans elles, les huit cents fiches n’apprennent rien.
+              </li>
+              <li>
+                <strong>Un problème d’abord</strong> (Merrill). Chaque chapitre du cours s’ouvre sur
+                une question concrète, active ce que le lecteur croit déjà savoir, expose, fait
+                appliquer, puis renvoie à l’encyclopédie. On retient ce qui répond à une question
+                qu’on s’est posée.
+              </li>
+              <li>
+                <strong>La charge cognitive bornée</strong> (Sweller). Quatre blocs maximum par
+                chapitre, une idée-clé, aucun choix à faire pendant la lecture. La navigation
+                principale est passée de onze entrées à trois, le reste étant replié — c’est la
+                divulgation progressive formalisée par Nielsen.
+              </li>
+              <li>
+                <strong>Le rappel plutôt que la relecture.</strong> Chaque chapitre finit sur des
+                questions dont la réponse est masquée. Se tester produit une rétention nettement
+                supérieure à relire, alors même que relire donne l’impression contraire — c’est
+                précisément pourquoi il faut l’imposer plutôt que le proposer.
+              </li>
+            </ul>
+            <p className="mt-4">
+              L’encyclopédie n’a pas été réduite : elle a été déplacée derrière le cours, et
+              regroupée par usage — situer, identifier, comparer, aller à la source — plutôt que par
+              type d’objet.
+            </p>
+          </Prose>
+        </Section>
+
+        <Section title="Les dialogues : un exercice, pas une voix">
+          <Prose>
+            <p>
+              La section <Link to="/dialogues" className="link-underline">Parler aux textes</Link>{' '}
+              met en scène la voix divine de trois corpus. C’est le dispositif le plus risqué du
+              site, et il appelle une explication franche.
+            </p>
+            <p className="mt-3">
+              Ce n’est pas Dieu qui répond, et ce n’est pas non plus « ce que la religion pense ».
+              C’est un modèle de langage contraint par un cahier des charges tiré des textes —
+              auto-désignations attestées, règles de syntaxe, lexique avec ses sens exacts, figures
+              rhétoriques, interdits doctrinaux, refus explicites — et alimenté, à chaque question,
+              par des passages sélectionnés qui sont affichés au lecteur. Le cahier des charges
+              complet est consultable depuis chaque conversation : une page qui prétend restituer
+              une voix divine doit pouvoir être auditée.
+            </p>
+            <p className="mt-3">
+              Trois garde-fous sont inscrits dans le dispositif lui-même. Aucune citation ne peut
+              être fabriquée : la voix ne dispose que des passages fournis et doit déclarer ceux
+              qu’elle emploie. Aucune prédiction, aucun avis juridique ou rituel, aucune
+              condamnation d’une personne ni d’un groupe. Et devant une détresse réelle, la voix
+              quitte le personnage et oriente vers une aide humaine.
+            </p>
+            <p className="mt-3">
+              L’intérêt pédagogique tient au choix du registre. Poser la même question au Dieu du
+              Deutéronome et à celui de Job, au Jésus de Marc et à celui de Jean, aux sourates
+              mecquoises et médinoises : l’écart de ton et de contenu est le meilleur argument
+              possible contre l’idée qu’un texte sacré dirait une chose, cohérente et unique.
+            </p>
+            <p className="mt-3">
+              Une limite s’impose particulièrement pour le Coran : la théologie musulmane
+              majoritaire tient que le texte n’est Coran qu’en arabe. Une restitution française
+              d’une voix dont la langue est jugée inséparable est, par construction, un objet
+              second. Cela ne l’interdit pas — mais cela doit être dit, et l’est sur la page.
+            </p>
+          </Prose>
+        </Section>
+
         <Section title="L’atelier de traduction : ce qu’il fait et ne fait pas">
           <Prose>
             <p>

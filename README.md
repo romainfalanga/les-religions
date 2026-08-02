@@ -7,6 +7,25 @@ Le parti pris est explicite : distinguer systématiquement trois registres qu'on
 confond d'ordinaire — ce qu'une tradition affirme d'elle-même, ce que l'histoire
 et l'archéologie permettent d'établir, et ce que les autres traditions en disent.
 
+## Structure
+
+Le site se lit dans cet ordre, et il est construit pour cela :
+
+1. **`/commencer`** — sept idées reçues et ce qui les remplace. Dix minutes.
+   C'est l'organisateur préalable au sens d'Ausubel : sans lui, les fiches
+   n'ont rien à quoi s'accrocher.
+2. **`/cours`** — douze chapitres courts. Chacun suit le cycle de Merrill :
+   un problème, l'activation d'une idée reçue, la démonstration en trois ou
+   quatre blocs, des questions de rappel à réponse masquée, puis des liens
+   vers l'encyclopédie. Progression retenue en local, sans compte.
+3. **`/explorer`** — l'encyclopédie, regroupée par usage (situer, identifier,
+   comparer, aller à la source) plutôt que par type d'objet.
+
+La navigation principale ne montre que trois entrées ; le reste est replié
+dans un menu et redéployé en clair sur `/explorer`. C'est de la divulgation
+progressive : onze rubriques de même poids obligeaient à choisir avant de
+savoir quoi choisir.
+
 ## Ce que contient l'atlas
 
 | | |
@@ -22,6 +41,8 @@ et l'archéologie permettent d'établir, et ce que les autres traditions en dise
 | **175 lieux et 22 routes** | Berceaux, sanctuaires, conciles, centres de savoir, sites archéologiques, diasporas — et les routes par lesquelles tout cela a circulé |
 | **11 corpus en langue originale** | 56 passages en hébreu, grec, arabe, sanskrit, pāli, chinois classique et gurmukhī, avec translittération, mot à mot, traductions comparées et analyse du biais |
 | **14 mécanismes d'émergence** | Comment une religion naît, fixe son canon, se divise, se diffuse et se transforme |
+| **12 chapitres de cours** | Une traversée ordonnée, de « qu'est-ce qu'une religion ? » à « comment sait-on ce qu'on sait ? » |
+| **3 voix, 8 registres, 87 passages** | Interroger la voix divine telle que chacun des trois corpus monothéistes la met en scène, couche textuelle par couche textuelle |
 
 ## Les pages
 
@@ -36,6 +57,8 @@ et l'archéologie permettent d'établir, et ce que les autres traditions en dise
   analyse de ce que chaque choix de traduction engage
 - **Émergence** — les mécanismes récurrents de naissance, fixation, division, diffusion et
   transformation des religions, avec pour chacun ce qu'il n'explique pas
+- **Dialogues** — la voix divine de la Bible hébraïque, de l'Évangile et du Coran,
+  restituée sous contrainte textuelle et vérifiable passage par passage
 - **Comparaisons** — Dieu, l'au-delà, le mal, la règle d'or, les déluges, le messianisme,
   les femmes, la violence, le rite, la mystique, la pureté, le salut, l'écologie,
   l'autorité, la conversion
@@ -67,6 +90,47 @@ configuration de réécriture d'URL.
 
 Les pages sont chargées à la demande : la page d'accueil ne télécharge pas les
 227 fiches de personnages ni les corpus multilingues.
+
+## Les dialogues
+
+`src/data/dialogue/` décrit, pour chacune des trois voix : ses registres
+(couches textuelles), ses auto-désignations attestées, ses règles de forme,
+son lexique avec les sens exacts du corpus, ses contraintes doctrinales, ses
+refus, ses erreurs d'imitation à éviter, et une trentaine de passages de
+référence indexés par mots-clés.
+
+À chaque tour, `selectAnchors()` sélectionne les passages pertinents par
+recouvrement lexical pondéré — volontairement simple et inspectable, sans
+appel réseau ni embedding — puis `buildSystemPrompt()` assemble l'instruction.
+Le prompt complet est affiché dans l'interface : une page qui restitue une
+voix divine doit pouvoir être auditée.
+
+La réponse doit se terminer par une ligne `SOURCES: …` listant les passages
+employés, qui sont affichés sous la réponse avec leur texte et l'écriture
+d'origine. Une réponse sans source déclarée est signalée comme telle.
+
+`npm run check:data` vérifie que chaque registre dispose d'assez de passages,
+que chaque passage porte au moins trois mots-clés, et que le prompt assemblé
+reste sous la limite acceptée par le relais.
+
+### Variables d'environnement
+
+Les dialogues passent par une fonction serverless, `netlify/functions/dialogue.mts`,
+qui relaie OpenRouter. La clé n'atteint jamais le navigateur — surtout, ne la
+préfixez pas par `VITE_`, ce préfixe la publierait dans le bundle.
+
+| Variable | Requise | Défaut |
+|---|---|---|
+| `OPENROUTER_API_KEY` | oui | — |
+| `OPENROUTER_MODEL` | non | `anthropic/claude-sonnet-4.6` |
+| `SITE_URL` | non | l'URL Netlify du site |
+
+À définir dans **Netlify › Site configuration › Environment variables**.
+Voir `.env.example`. Tant que la clé est absente, la page reste consultable
+et affiche proprement qu'elle attend sa configuration.
+
+En local, lancez `npx netlify dev` et non `npm run dev` : Vite seul ne sert
+pas les fonctions.
 
 ### Déploiement
 
