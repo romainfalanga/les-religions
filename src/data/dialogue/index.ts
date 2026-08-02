@@ -46,6 +46,62 @@ function normalizeFr(s: string): string {
     .replace(/[^a-z0-9\s]/g, ' ');
 }
 
+/**
+ * Racinisation grossière du français.
+ *
+ * Sans elle, « aimer » ne rejoint pas « amour » et « pardonner » ne rejoint pas
+ * « pardon » : la sélection rate des passages manifestement pertinents, et la
+ * voix comble le vide avec ce qu'elle sait du corpus par ailleurs — ce qui ruine
+ * la promesse de vérifiabilité. On tronque après suppression des désinences les
+ * plus courantes ; c'est brutal, mais sur trente passages par voix le taux de
+ * faux positifs reste négligeable et le procédé demeure lisible.
+ */
+function stem(w: string): string {
+  let x = w;
+  for (const suffix of ['issement', 'issant', 'ations', 'ation', 'ements', 'ement', 'aient', 'erait', 'eront', 'ance', 'ence', 'ions', 'iez', 'ais', 'ait', 'ant', 'ent', 'ons', 'ez', 'er', 'ir', 're', 'es', 's', 'e']) {
+    if (x.length - suffix.length >= 4 && x.endsWith(suffix)) {
+      x = x.slice(0, -suffix.length);
+      break;
+    }
+  }
+  return x.slice(0, 6);
+}
+
+/**
+ * Familles de sens propres au domaine, que la racinisation ne peut pas relier.
+ * Chaque terme rencontré ajoute les racines de sa famille aux termes cherchés.
+ */
+const FAMILIES: string[][] = [
+  ['aimer', 'amour', 'aime', 'affection', 'tendresse', 'charite'],
+  ['pardon', 'pardonner', 'absoudre', 'remettre', 'gracier', 'faute', 'peche'],
+  ['mal', 'mechant', 'nuire', 'blesser', 'tort', 'offense', 'injustice'],
+  ['souffrir', 'souffrance', 'douleur', 'peine', 'epreuve', 'malheur', 'detresse'],
+  ['mort', 'mourir', 'deces', 'deuil', 'disparaitre', 'apres', 'audela'],
+  ['ennemi', 'adversaire', 'haine', 'rancune', 'vengeance', 'colere'],
+  ['pauvre', 'misere', 'orphelin', 'veuve', 'faible', 'demuni', 'mendiant'],
+  ['priere', 'prier', 'invoquer', 'supplier', 'culte', 'rite'],
+  ['creer', 'creation', 'origine', 'commencement', 'monde', 'univers'],
+  ['savoir', 'connaitre', 'comprendre', 'science', 'ignorance', 'mystere'],
+  ['justice', 'juste', 'droit', 'equite', 'juger', 'jugement'],
+  ['doute', 'douter', 'croire', 'foi', 'incroyance', 'preuve'],
+  ['peur', 'crainte', 'angoisse', 'inquietude'],
+  ['femme', 'homme', 'egalite', 'difference', 'genre'],
+  ['etranger', 'migrant', 'accueil', 'hospitalite', 'autre'],
+  ['silence', 'absence', 'abandon', 'seul', 'solitude', 'oublie'],
+  ['sens', 'but', 'pourquoi', 'raison', 'utilite', 'vain'],
+  ['violence', 'guerre', 'tuer', 'meurtre', 'arme', 'combat'],
+  ['liberte', 'choix', 'destin', 'volonte', 'predestination', 'fatalisme'],
+  ['richesse', 'argent', 'possession', 'avarice', 'heritage'],
+];
+
+const FAMILY_INDEX = new Map<string, string[]>();
+for (const family of FAMILIES) {
+  const roots = family.map(stem);
+  for (const root of roots) {
+    FAMILY_INDEX.set(root, [...new Set([...(FAMILY_INDEX.get(root) ?? []), ...roots])]);
+  }
+}
+
 const STOPWORDS = new Set(
   ('le la les un une des de du au aux et ou mais donc or ni car que qui quoi dont ou a en y il elle ils elles je tu nous vous on ce cet cette ces mon ma mes ton ta tes son sa ses est sont etre avoir fait faire pas ne plus moins tres pour par avec sans sur sous dans chez si comme quand alors tout tous toute toutes meme aussi bien'
   ).split(' '),
@@ -75,23 +131,34 @@ export function selectAnchors(
     .map((m, i, arr) => ({ text: normalizeFr(m.content), weight: 1 + i * 0.5 * (arr.length > 1 ? 1 : 0) }));
 
   const terms = new Map<string, number>();
+  const add = (root: string, weight: number) =>
+    terms.set(root, Math.max(terms.get(root) ?? 0, weight));
+
   for (const { text, weight } of weighted) {
     for (const w of text.split(/\s+/)) {
       if (w.length < 3 || STOPWORDS.has(w)) continue;
-      terms.set(w, (terms.get(w) ?? 0) + weight);
+      const root = stem(w);
+      add(root, weight);
+      // Les mots de la même famille de sens comptent un peu moins que le mot posé.
+      for (const sibling of FAMILY_INDEX.get(root) ?? []) add(sibling, weight * 0.7);
     }
   }
 
   const scored = voice.anchors.map((a) => {
     let score = 0;
-    const hay = normalizeFr([a.text, ...a.keywords, a.constraint ?? ''].join(' '));
-    for (const [term, weight] of terms) {
+    const keywordRoots = new Set(
+      a.keywords.flatMap((k) => normalizeFr(k).split(/\s+/).filter(Boolean).map(stem)),
+    );
+    const bodyRoots = new Set(
+      normalizeFr([a.text, a.constraint ?? ''].join(' '))
+        .split(/\s+/)
+        .filter((w) => w.length >= 3 && !STOPWORDS.has(w))
+        .map(stem),
+    );
+    for (const [root, weight] of terms) {
       // Un mot-clé déclaré vaut plus qu'une occurrence dans le corps du passage.
-      if (a.keywords.some((k) => normalizeFr(k).includes(term) || term.includes(normalizeFr(k)))) {
-        score += 4 * weight;
-      } else if (hay.includes(term)) {
-        score += 1 * weight;
-      }
+      if (keywordRoots.has(root)) score += 4 * weight;
+      else if (bodyRoots.has(root)) score += 1 * weight;
     }
     return { anchor: a, score };
   });
