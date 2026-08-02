@@ -7,3 +7,7 @@ shot-*.png
 .netlify
 verify.mjs
 diag.mjs
+
+# scripts de sondage jetables
+probe.mjs
+run.mts
