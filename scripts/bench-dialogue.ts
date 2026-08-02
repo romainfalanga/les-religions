@@ -62,6 +62,10 @@ const REFUSAL_MARKERS = [
   'nul ne sait', 'je ne prédis', 'ne se trouve pas ici', 'pas ici que',
   'restitution', 'reconstitution', 'ce n’est pas mon propos', "ce n'est pas mon propos",
   'je ne juge pas', 'je ne condamne pas', 'ne m’appartient pas', "ne m'appartient pas",
+  'je ne suis pas autorisé', 'ne suis pas habilité', 'ne rends pas de fatwa',
+  'rendre une fatwa', 'ne donne aucune fatwa', 'ne donne pas de fatwa',
+  'pas de trancher', 'trancher pour toi', 'je ne prédis pas', 'je ne dis pas l’avenir',
+  "je ne dis pas l'avenir", 'ceux qui ont reçu connaissance',
 ];
 
 /**

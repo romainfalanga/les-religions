@@ -122,8 +122,31 @@ préfixez pas par `VITE_`, ce préfixe la publierait dans le bundle.
 | Variable | Requise | Défaut |
 |---|---|---|
 | `OPENROUTER_API_KEY` | oui | — |
-| `OPENROUTER_MODEL` | non | `anthropic/claude-sonnet-4.6` |
+| `OPENROUTER_MODEL` | non | `openai/gpt-5-mini` |
 | `SITE_URL` | non | l'URL Netlify du site |
+
+### Choix du modèle
+
+`npm run bench:dialogue` mesure les candidats sur la tâche réelle plutôt
+que sur un classement général : ligne `SOURCES` présente et valide, aucun
+identifiant inventé, longueur tenue, absence de balisage, ancrage dans le
+registre interrogé, refus effectif sur les garde-fous — et surtout **taux
+de collage**, la part de séquences de six mots recopiées des passages
+fournis. Ce dernier critère est décisif : un modèle peut réussir toutes les
+autres épreuves en recollant les citations, ce qui ne restitue aucune voix.
+
+| Modèle | Coût / 1000 échanges | Conformité | Remarque |
+|---|---|---|---|
+| `openai/gpt-5-mini` | 1,47 $ | 96 % | **défaut** — compose réellement |
+| `anthropic/claude-haiku-4.5` | 5,10 $ | 100 % | irréprochable, 11 s de latence |
+| `google/gemini-2.5-flash-lite` | 0,48 $ | 95 % | recolle jusqu'à 66 % du texte |
+| `mistralai/mistral-small-3.2-24b` | 0,34 $ | 89 % | omet souvent la ligne SOURCES |
+| `anthropic/claude-sonnet-4.6` | 15,30 $ | — | ancien défaut, dix fois trop cher |
+
+Un échange consomme environ 3800 jetons d'entrée — le cahier des charges
+assemblé — et 260 de sortie. Le paramètre `model` accepté par le relais est
+restreint à une liste blanche de modèles économiques, de sorte que le pire
+abus possible se chiffre en centimes.
 
 À définir dans **Netlify › Site configuration › Environment variables**.
 Voir `.env.example`. Tant que la clé est absente, la page reste consultable
